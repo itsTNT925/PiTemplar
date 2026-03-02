@@ -20,155 +20,147 @@ For this specific project, I named everything either PiTemplar or templar. so de
 
 Once RaspberryPiOS Lite is installed (32 preferably, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
-#NOTE: IF YOU RUN INTO ISSUES COPYING FROM THIS README FILE, JUST RUN THIS IN CODE VIEW!
+## NOTE: IF YOU RUN INTO ISSUES COPYING FROM THIS README FILE, JUST RUN THIS IN CODE VIEW!
 
-########################################## Make the screen work, Bread and butter of PiTemplar!!!#######################################
+# Make the screen work, Bread and butter of PiTemplar!!!
 
 Waveshare e-paper uses SPI.
 
-sudo raspi-config
+    sudo raspi-config
 
 Go to:
-
-Interface Options → SPI → Enable
+Interface Options → SPI → Enable  
 
 Reboot:
 
-sudo reboot
+    sudo reboot
 
-Install Waveshare e-Paper library
-
+Install Waveshare e-Paper library  
 Install dependencies first:
 
-sudo apt update
-
-sudo apt install -y python3-pip python3-pil python3-numpy git
-
-sudo apt install python3-psutil
+    sudo apt update
+    sudo apt install -y python3-pip python3-pil python3-numpy git
+    sudo apt install python3-psutil
 
 
 Clone Waveshare’s repo:
 
-git clone https://github.com/waveshareteam/e-Paper.git
-cd e-Paper/RaspberryPi_JetsonNano/python/examples/
-python3 epd_2in13_V4_test.py
+    git clone https://github.com/waveshareteam/e-Paper.git
+    cd e-Paper/RaspberryPi_JetsonNano/python/examples/
+    python3 epd_2in13_V4_test.py
 
-Your drivers will be here:
-
+Your drivers will be here:  
 ~/e-Paper/RaspberryPi_JetsonNano/python
 
 so make sure you are in /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
-cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
+    cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
 Now clone the pitemplar repository 
 
-git clone https://github.com/Modernknight101/PiTemplar.git
+    git clone https://github.com/Modernknight101/PiTemplar.git
 
 From the driver directory:
 
-cd ~/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-python3 mem_display.py
+    cd ~/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+    python3 mem_display.py
 
 
 You should now see:
 
-Disk Used:
-Wifi:
-IP:
+Disk Used:  
+Wifi:  
+IP:  
 CPU:
 
 Now stop it with Ctrl+C so you can finish the program.
 
-Start on boot
-
+Start on boot  
 Edit crontab:
 
-crontab -e
+    crontab -e
 
 no crontab for pitemplar - using an empty one Select an editor. To change later, run select-editor again. 1. /bin/nano <---- easiest 2. /usr/bin/vim.tiny 3. /bin/ed Choose 1-3 [1]:
 
-pick option 1
-
+pick option 1  
 Add:
 
-@reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py 
+    @reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py 
 
-Save:
-
-CTRL+O → ENTER
+Save:  
+CTRL+O → ENTER  
 CTRL+X
 
  Make sure the script is executable (recommended)
 
-chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
+    chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
 
 Create a systemd service file
 
-sudo nano /etc/systemd/system/epaper-status.service
+    sudo nano /etc/systemd/system/epaper-status.service
 
 Paste exactly this (adjust nothing unless noted):
 
-[Unit]
-Description=Waveshare ePaper System Status
-After=multi-user.target
-
-[Service]
-Type=simple
-User=pitemplar
-WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
-Restart=always
-RestartSec=10
-Environment=PYTHONUNBUFFERED=1
-
-
-[Install]
-WantedBy=multi-user.target
+    [Unit]
+    Description=Waveshare ePaper System Status
+    After=multi-user.target
+    
+    [Service]
+    Type=simple
+    User=pitemplar
+    WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+    ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
+    Restart=always
+    RestartSec=10
+    Environment=PYTHONUNBUFFERED=1
+    
+    
+    [Install]
+    WantedBy=multi-user.target
 
 
 Save:
 
-CTRL+O → ENTER
+CTRL+O → ENTER  
 CTRL+X
 
 Reload systemd and enable the service
 
-sudo systemctl daemon-reexec
-
-sudo systemctl daemon-reload
-
-sudo systemctl enable epaper-status.service
+    sudo systemctl daemon-reexec
+    sudo systemctl daemon-reload
+    sudo systemctl enable epaper-status.service
 
 Start it now (no reboot needed)
-sudo systemctl start epaper-status.service
+    
+    sudo systemctl start epaper-status.service
 
 Within ~30 seconds, your e-paper should update.
 
-Check status (VERY useful)
+Check status (VERY useful)  
 systemctl status epaper-status.service
 
 
 You should see:
 
-● epaper-status.service - Waveshare ePaper System Status
-     Loaded: loaded (/etc/systemd/system/epaper-status.service; enabled; preset: enabled)
-     Active: active (running) since Fri 2026-01-23 22:35:35 MST; 29min ago
- Invocation: 1cae31d444084afa96ccc125436a671e
-   Main PID: 904 (python3)
-      Tasks: 6 (limit: 373)
-        CPU: 1min 45.143s
-     CGroup: /system.slice/epaper-status.service
-             └─904 /usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
+● epaper-status.service - Waveshare ePaper System Status  
+     Loaded: loaded (/etc/systemd/system/epaper-status.service; enabled; preset: enabled)  
+     Active: active (running) since Fri 2026-01-23 22:35:35 MST; 29min ago  
+ Invocation: 1cae31d444084afa96ccc125436a671e  
+   Main PID: 904 (python3)  
+      Tasks: 6 (limit: 373)  
+        CPU: 1min 45.143s  
+     CGroup: /system.slice/epaper-status.service  
+             └─904 /usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py  
 
-Jan 23 22:35:35 PiTemplar systemd[1]: Started epaper-status.service - Waveshare ePaper System Status.
+Jan 23 22:35:35 PiTemplar systemd[1]: Started epaper-status.service - Waveshare ePaper System Status.  
 Jan 23 22:35:39 PiTemplar python3[904]: mem_display.py started (Pirata One title + SSID + disk usage)
 
 
 No red error messages
 
 🔁 Reboot test (important)
-sudo reboot
+    
+    sudo reboot
 
 After boot:
 
@@ -178,66 +170,59 @@ Screen should refresh automatically
 
 If it does → you’re done ✅
 
-🧠 Common Gotchas (you’re already safe)
-
-✅ Uses full path to python3
-
-✅ Runs as user templar (SPI access OK)
-
-✅ Working directory set (imports work)
-
+🧠 Common Gotchas (you’re already safe)  
+✅ Uses full path to python3  
+✅ Runs as user templar (SPI access OK)  
+✅ Working directory set (imports work)  
 ✅ Restart enabled if script crashes
  
 
-###################### Now let's do SAMBA to make it work as a true file server now that the screen works!##############################
+# Now let's do SAMBA to make it work as a true file server now that the screen works!
 
-#Process has been automated to make it more efficient.
+## Process has been automated to make it more efficient.  
 Run the NAS setup script:
 
-```bash
-cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+    cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
 
-chmod +x setup_pi_nas.sh
-sudo ./setup_pi_nas.sh
+    chmod +x setup_pi_nas.sh
+    sudo ./setup_pi_nas.sh
 
-#NOTE: INITIAL PASSWORD "pitemplar" IS RECOMMENDED. CHANGE THE PASSWORD AFTER INSTALL!!!
+NOTE: INITIAL PASSWORD "pitemplar" IS RECOMMENDED. CHANGE THE PASSWORD AFTER INSTALL!!!
 
-#if you missed that AND SOMETHING WENT WRONG:
+### if you missed that AND SOMETHING WENT WRONG:
 
-#sudo apt purge samba samba-common samba-common-bin cifs-utils smbclient -y
+    sudo apt purge samba samba-common samba-common-bin cifs-utils smbclient -y
 
-#Then rerun the script and use "pitemplar" as the password. Otherwise if everything works skip this step.
+### Then rerun the script and use "pitemplar" as the password. Otherwise if everything works skip this step.
 
-#Afterwards, your Windows machine should be able to connect using the Pi’s Hostname or IP.
+Afterwards, your Windows machine should be able to connect using the Pi’s Hostname or IP.
 
-#Test from another device
-#Windows
-#\\pitemplar\private
+Test from another device  
+Windows  
+\\pitemplar\private
 
-#macOS / Linux
-#smb://templar/private
+macOS / Linux  
+smb://templar/private
 
-#To change passwords on the Share:
+To change passwords on the Share:
 
-#sudo smbpasswd pitemplar <NEW PASSWORD>
-
+    sudo smbpasswd pitemplar <NEW PASSWORD>
 
 
-########################## Let's do web GUI, this will allow us to switch networks easier.#################################
+
+# Let's do web GUI, this will allow us to switch networks easier.  
 This process is automated with a Bash script to eliminate potential errors.
 
-cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-
-chmod +x setup_web_gui.sh
-
-sudo ./setup_web_gui.sh
+    cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+    chmod +x setup_web_gui.sh
+    sudo ./setup_web_gui.sh
 
 After this the Web GUI should be up. Login with <IP>:8080 and check out the features!
 
 
 
-🎩 Thank You ♥
-💖 Support Me
+🎩 Thank You ♥  
+💖 Support Me  
 If you like my work and want to support me, plz consider
 
 https://www.paypal.me/Modernknight101
